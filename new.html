@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QueueLess | Smart Crowd Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; scroll-behavior: smooth; }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .status-low { color: #10b981; background: #ecfdf5; }
+        .status-medium { color: #f59e0b; background: #fffbeb; }
+        .status-high { color: #ef4444; background: #fef2f2; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <!-- NAVIGATION BAR -->
+    <nav class="sticky top-0 z-50 glass border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="navigateTo('categories')">
+                <div class="bg-indigo-600 p-1.5 rounded-lg text-white">
+                    <i data-lucide="zap" class="w-6 h-6"></i>
+                </div>
+                <span class="text-xl font-extrabold tracking-tight text-indigo-900">QueueLess</span>
+            </div>
+            <div class="hidden md:flex gap-8 font-semibold text-slate-600 text-sm">
+                <button onclick="navigateTo('categories')" class="hover:text-indigo-600 transition">Explore</button>
+                <button onclick="navigateTo('analytics')" class="hover:text-indigo-600 transition">Analytics</button>
+                <button onclick="navigateTo('business')" class="hover:text-indigo-600 transition">Business View</button>
+                <button onclick="navigateTo('about')" class="hover:text-indigo-600 transition">How it Works</button>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="user-location" class="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full uppercase tracking-tighter">Mumbai, IN</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+
+        <!-- 1. CATEGORIES PAGE (HOME) -->
+        <div id="page-categories" class="tab-content active">
+            <div class="mb-10 text-center md:text-left">
+                <h1 class="text-4xl font-extrabold text-slate-900 mb-2">Beat the Queue.</h1>
+                <p class="text-slate-500 text-lg">Select a category to find the least crowded spots nearby.</p>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                <!-- Dynamic Categories -->
+                <div onclick="filterLocations('College Facilities')" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 hover:border-indigo-400 hover:shadow-md transition cursor-pointer group text-center">
+                    <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-indigo-600 group-hover:text-white transition">
+                        <i data-lucide="graduation-cap"></i>
+                    </div>
+                    <span class="font-bold text-slate-800">Campus</span>
+                </div>
+                <div onclick="filterLocations('Hospitals')" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 hover:border-indigo-400 hover:shadow-md transition cursor-pointer group text-center">
+                    <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-indigo-600 group-hover:text-white transition">
+                        <i data-lucide="stethoscopes"></i>
+                    </div>
+                    <span class="font-bold text-slate-800">Hospitals</span>
+                </div>
+                <div onclick="filterLocations('Railway Services')" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 hover:border-indigo-400 hover:shadow-md transition cursor-pointer group text-center">
+                    <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-indigo-600 group-hover:text-white transition">
+                        <i data-lucide="train"></i>
+                    </div>
+                    <span class="font-bold text-slate-800">Transport</span>
+                </div>
+                <div onclick="filterLocations('Food Courts')" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 hover:border-indigo-400 hover:shadow-md transition cursor-pointer group text-center">
+                    <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-indigo-600 group-hover:text-white transition">
+                        <i data-lucide="utensils"></i>
+                    </div>
+                    <span class="font-bold text-slate-800">Food Court</span>
+                </div>
+                <div onclick="filterLocations('Temples')" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 hover:border-indigo-400 hover:shadow-md transition cursor-pointer group text-center">
+                    <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-indigo-600 group-hover:text-white transition">
+                        <i data-lucide="landmark"></i>
+                    </div>
+                    <span class="font-bold text-slate-800">Temples</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. LOCATION LISTING PAGE -->
+        <div id="page-listing" class="tab-content">
+            <button onclick="navigateTo('categories')" class="mb-6 flex items-center gap-2 text-indigo-600 font-bold">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Categories
+            </button>
+            <h2 id="listing-title" class="text-3xl font-extrabold mb-8 capitalize">Locations</h2>
+            <div id="location-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Location cards injected here -->
+            </div>
+        </div>
+
+        <!-- 3. LOCATION DASHBOARD PAGE -->
+        <div id="page-dashboard" class="tab-content">
+            <div id="dashboard-content">
+                <!-- Specific location data injected here -->
+            </div>
+        </div>
+
+        <!-- 4. ANALYTICS PAGE -->
+        <div id="page-analytics" class="tab-content">
+            <h2 class="text-3xl font-extrabold mb-8">Crowd Analytics</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-lg mb-6">Peak Visit Hours (Aggregate)</h3>
+                    <canvas id="peakChart"></canvas>
+                </div>
+                <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-lg mb-6">Daily Visitor Trends</h3>
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. BUSINESS VIEW PAGE -->
+        <div id="page-business" class="tab-content">
+            <h2 class="text-3xl font-extrabold mb-4">Facility Manager</h2>
+            <p class="text-slate-500 mb-10">Real-time data for "College Canteen" administration.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <div class="bg-indigo-600 p-8 rounded-3xl text-white">
+                    <p class="text-indigo-100 text-sm font-semibold mb-1 uppercase tracking-wider">Total Visitors Today</p>
+                    <h4 class="text-4xl font-black">412</h4>
+                </div>
+                <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-400 text-sm font-semibold mb-1 uppercase tracking-wider">Avg. Wait Time</p>
+                    <h4 class="text-4xl font-black text-slate-800">14m</h4>
+                </div>
+                <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-400 text-sm font-semibold mb-1 uppercase tracking-wider">Rush Prediction</p>
+                    <h4 class="text-4xl font-black text-orange-500">12:30 PM</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. ABOUT PAGE -->
+        <div id="page-about" class="tab-content">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-3xl font-extrabold mb-8 text-center">How QueueLess Works</h2>
+                <div class="space-y-12">
+                    <div class="flex gap-6">
+                        <div class="flex-shrink-0 w-12 h-12 bg-indigo-600 rounded-full text-white flex items-center justify-center font-bold text-xl">1</div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">Temporal Queue Modeling</h3>
+                            <p class="text-slate-600">Unlike simple counters, we assign every check-in a unique <b>Completion Time</b>. Completion Time = Current Time + (Queue Position × Service Time). This simulates the flow of a real queue.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-6">
+                        <div class="flex-shrink-0 w-12 h-12 bg-indigo-600 rounded-full text-white flex items-center justify-center font-bold text-xl">2</div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">Dynamic Auto-Checkout</h3>
+                            <p class="text-slate-600">The system automatically "serves" and removes users once their completion time passes. This keeps crowd levels accurate without requiring users to manually check out.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-6">
+                        <div class="flex-shrink-0 w-12 h-12 bg-indigo-600 rounded-full text-white flex items-center justify-center font-bold text-xl">3</div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">Future Road Map</h3>
+                            <p class="text-slate-600">In production, we would integrate <b>OpenCV Computer Vision</b> sensors at entrances, <b>GPS Geofencing</b> to verify check-ins, and <b>LSTM Neural Networks</b> to predict crowds weeks in advance.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- MOCK DATA ---
+        let locations = [
+            { id: 1, name: "College Main Canteen", category: "College Facilities", serviceTime: 3, activeCheckins: [], icon: "coffee" },
+            { id: 2, name: "Admin Office Block", category: "College Facilities", serviceTime: 5, activeCheckins: [], icon: "file-text" },
+            { id: 3, name: "City General Hospital", category: "Hospitals", serviceTime: 12, activeCheckins: [], icon: "hospital" },
+            { id: 4, name: "Emergency Care Unit", category: "Hospitals", serviceTime: 15, activeCheckins: [], icon: "heart-pulse" },
+            { id: 5, name: "Ticket Counter A", category: "Railway Services", serviceTime: 4, activeCheckins: [], icon: "ticket" },
+            { id: 6, name: "Shiv Temple Main", category: "Temples", serviceTime: 1, activeCheckins: [], icon: "milestone" },
+            { id: 7, name: "South Wing Food Court", category: "Food Courts", serviceTime: 6, activeCheckins: [], icon: "pizza" },
+        ];
+
+        let selectedCategory = "";
+        let currentLocId = null;
+
+        // --- NAVIGATION LOGIC ---
+        function navigateTo(pageId) {
+            document.querySelectorAll('.tab-content').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + pageId).classList.add('active');
+            window.scrollTo(0,0);
+        }
+
+        // --- QUEUE LOGIC ---
+        function updateAllQueues() {
+            const now = Date.now();
+            locations.forEach(loc => {
+                // Auto-Checkout Logic: Remove if completion time is past
+                loc.activeCheckins = loc.activeCheckins.filter(c => c.completionTime > now);
+            });
+            refreshUI();
+        }
+
+        function getWaitTime(loc) {
+            return loc.activeCheckins.length * loc.serviceTime;
+        }
+
+        function getCrowdStatus(wait) {
+            if (wait <= 10) return { label: 'Low', class: 'status-low' };
+            if (wait <= 25) return { label: 'Medium', class: 'status-medium' };
+            return { label: 'High', class: 'status-high' };
+        }
+
+        // --- USER ACTIONS ---
+        function checkIn(locId) {
+            // Identity Logic: Production would use DB + Auth. Demo uses LocalStorage.
+            if (localStorage.getItem(`checkin_${locId}`)) {
+                alert("You are already in queue for this location!");
+                return;
+            }
+
+            const loc = locations.find(l => l.id === locId);
+            const now = Date.now();
+            const pos = loc.activeCheckins.length;
+            const waitMs = pos * loc.serviceTime * 60 * 1000;
+            const completion = now + waitMs + (loc.serviceTime * 60 * 1000);
+
+            loc.activeCheckins.push({
+                timestamp: now,
+                completionTime: completion
+            });
+
+            localStorage.setItem(`checkin_${locId}`, completion);
+            updateAllQueues();
+            if (currentLocId) openDashboard(locId);
+        }
+
+        function notifyMe(locName) {
+            alert(`Notification Set: We will alert you when ${locName} crowd level drops to 'Low'.`);
+        }
+
+        // --- UI RENDERING ---
+        function filterLocations(cat) {
+            selectedCategory = cat;
+            document.getElementById('listing-title').innerText = cat;
+            renderListing();
+            navigateTo('listing');
+        }
+
+        function renderListing() {
+            const container = document.getElementById('location-list');
+            container.innerHTML = "";
+            
+            const filtered = locations.filter(l => l.category === selectedCategory);
+            
+            // Find "Least Crowded" option
+            const leastCrowded = [...filtered].sort((a,b) => getWaitTime(a) - getWaitTime(b))[0];
+
+            filtered.forEach(loc => {
+                const wait = getWaitTime(loc);
+                const status = getCrowdStatus(wait);
+                const isBest = loc.id === leastCrowded.id && filtered.length > 1;
+
+                container.innerHTML += `
+                    <div onclick="openDashboard(${loc.id})" class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-400 transition cursor-pointer relative overflow-hidden group">
+                        ${isBest ? `<div class="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-black px-4 py-1 uppercase rounded-bl-xl">Best Choice</div>` : ''}
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 group-hover:bg-indigo-600 group-hover:text-white transition">
+                                <i data-lucide="${loc.icon}"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg leading-tight">${loc.name}</h3>
+                                <span class="text-xs px-2 py-0.5 rounded-full font-bold ${status.class}">${status.label} Crowd</span>
+                            </div>
+                        </div>
+                        <div class="flex items-end justify-between">
+                            <div>
+                                <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Est. Wait</p>
+                                <div class="flex items-baseline gap-1">
+                                    <span class="text-4xl font-black text-indigo-600">${wait}</span>
+                                    <span class="text-slate-500 font-bold text-sm">min</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Queue Size</p>
+                                <p class="text-slate-800 font-extrabold text-xl">${loc.activeCheckins.length}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        function openDashboard(locId) {
+            currentLocId = locId;
+            const loc = locations.find(l => l.id === locId);
+            const wait = getWaitTime(loc);
+            const status = getCrowdStatus(wait);
+            const isCheckedIn = localStorage.getItem(`checkin_${loc.id}`) !== null;
+
+            const container = document.getElementById('dashboard-content');
+            container.innerHTML = `
+                <button onclick="navigateTo('listing')" class="mb-6 flex items-center gap-2 text-indigo-600 font-bold">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Listing
+                </button>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 space-y-8">
+                        <div class="bg-white p-10 rounded-[40px] border border-slate-200 shadow-sm">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+                                <div>
+                                    <h2 class="text-4xl font-black text-slate-900 mb-2">${loc.name}</h2>
+                                    <p class="text-slate-500 font-medium">${loc.category} &bull; Service time: ${loc.serviceTime}m/person</p>
+                                </div>
+                                <span class="w-fit text-sm px-4 py-2 rounded-2xl font-black uppercase tracking-widest ${status.class}">${status.label} Crowd Now</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-8 mb-10">
+                                <div class="bg-slate-50 p-6 rounded-3xl">
+                                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Current Wait Time</p>
+                                    <h4 class="text-5xl font-black text-indigo-600">${wait}<span class="text-xl">min</span></h4>
+                                </div>
+                                <div class="bg-slate-50 p-6 rounded-3xl">
+                                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">People in Queue</p>
+                                    <h4 class="text-5xl font-black text-slate-800">${loc.activeCheckins.length}</h4>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col md:flex-row gap-4">
+                                <button onclick="checkIn(${loc.id})" ${isCheckedIn ? 'disabled' : ''} class="flex-1 bg-indigo-600 text-white py-5 rounded-2xl font-bold text-lg hover:bg-indigo-700 transition disabled:bg-slate-300 disabled:cursor-not-allowed shadow-xl shadow-indigo-100">
+                                    ${isCheckedIn ? 'Currently in Queue' : 'Check-in (Join Queue)'}
+                                </button>
+                                <button onclick="notifyMe('${loc.name}')" class="flex-1 border-2 border-slate-200 text-slate-600 py-5 rounded-2xl font-bold text-lg hover:border-indigo-600 hover:text-indigo-600 transition">
+                                    Notify Me
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-slate-900 p-8 rounded-[40px] text-white">
+                            <h3 class="font-bold text-xl mb-6">Why visit now?</h3>
+                            <ul class="space-y-4">
+                                <li class="flex items-center gap-3 text-slate-300 text-sm italic">
+                                    <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
+                                    Waiting time is 20% lower than yesterday.
+                                </li>
+                                <li class="flex items-center gap-3 text-slate-300 text-sm italic">
+                                    <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
+                                    Rush predicted to increase in 45 mins.
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-8 rounded-[40px] border border-slate-200">
+                             <h3 class="font-bold text-xl mb-4 text-slate-800 tracking-tight">AI Insights</h3>
+                             <p class="text-slate-500 text-sm leading-relaxed italic">Our predictive model suggests Tuesday mornings are the fastest service windows for this location.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+            navigateTo('dashboard');
+        }
+
+        function refreshUI() {
+            if (document.getElementById('page-listing').classList.contains('active')) renderListing();
+            if (currentLocId && document.getElementById('page-dashboard').classList.contains('active')) openDashboard(currentLocId);
+        }
+
+        // --- ANALYTICS CHARTS ---
+        function initCharts() {
+            const ctxPeak = document.getElementById('peakChart').getContext('2d');
+            new Chart(ctxPeak, {
+                type: 'line',
+                data: {
+                    labels: ['8am', '10am', '12pm', '2pm', '4pm', '6pm', '8pm'],
+                    datasets: [{
+                        label: 'Crowd Density',
+                        data: [10, 45, 95, 70, 40, 85, 20],
+                        borderColor: '#4f46e5',
+                        tension: 0.4,
+                        fill: true,
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)'
+                    }]
+                }
+            });
+
+            const ctxTrend = document.getElementById('trendChart').getContext('2d');
+            new Chart(ctxTrend, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Visitors',
+                        data: [1200, 1900, 1500, 1400, 2200, 2800, 2400],
+                        backgroundColor: '#4f46e5',
+                        borderRadius: 8
+                    }]
+                }
+            });
+        }
+
+        // --- SYSTEM INITIALIZATION ---
+        window.onload = () => {
+            lucide.createIcons();
+            initCharts();
+            
+            // Background Auto-Checkout Engine (Runs every 10 seconds)
+            setInterval(updateAllQueues, 10000);
+
+            // Mock some initial data for demo realism
+            locations.forEach(loc => {
+                const randomPeople = Math.floor(Math.random() * 8);
+                for(let i=0; i<randomPeople; i++) {
+                    loc.activeCheckins.push({ completionTime: Date.now() + (Math.random() * 1200000) });
+                }
+            });
+            updateAllQueues();
+        };
+
+        /** 
+         * IDEATHON DEVELOPMENT NOTES:
+         * 
+         * 1. REAL-TIME DB INTEGRATION: 
+         *    Replace 'locations' array with a Firebase Firestore collection. 
+         *    Use 'onSnapshot' to listen for queue updates across all users instantly.
+         * 
+         * 2. MACHINE LEARNING:
+         *    In production, serviceTime would not be a constant. A regression model 
+         *    would calculate serviceTime based on staff availability and time of day.
+         * 
+         * 3. IOT / SENSORS:
+         *    Automated check-ins can be achieved by integrating IR beam counters 
+         *    or analyzing security camera feeds using OpenCV to count people in the queue.
+         * 
+         * 4. AUTHENTICATION:
+         *    Replace localStorage with Clerk or Firebase Auth to ensure 1 check-in 
+         *    per phone number/identity.
+         */
+    </script>
+</body>
+</html>
